@@ -1,6 +1,7 @@
 *.iml
 .gradle
 /local.properties
+app/src/main/res/xml/network_security_config.xml
 .DS_Store
 /build
 /captures

@@ -4,7 +4,6 @@ build/
 
 # Local configuration file (sdk path, etc)
 local.properties
-app/src/main/res/xml/network_security_config.xml
 
 # Log/OS Files
 *.log
