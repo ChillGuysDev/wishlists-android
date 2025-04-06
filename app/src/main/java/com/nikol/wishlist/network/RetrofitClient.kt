@@ -1,0 +1,173 @@
+package com.nikol.wishlist.network
+
+import com.nikol.wishlist.BuildConfig
+import com.nikol.wishlist.network.tokenprovider.AuthTokenProvider
+import kotlinx.coroutines.runBlocking
+import kotlinx.serialization.json.Json
+import okhttp3.Authenticator
+import okhttp3.Interceptor
+import okhttp3.MediaType.Companion.toMediaType
+import okhttp3.OkHttpClient
+import okhttp3.logging.HttpLoggingInterceptor
+import retrofit2.Retrofit
+import retrofit2.converter.kotlinx.serialization.asConverterFactory
+import java.util.concurrent.TimeUnit
+import javax.inject.Inject
+import javax.inject.Singleton
+
+@Singleton
+class RetrofitClient @Inject constructor(
+    private val tokenStorage: AuthTokenProvider
+) {
+
+    companion object {
+        private const val BASE_URL = BuildConfig.BASE_URL
+        private const val TIMEOUT = 30L
+    }
+
+    // Configure JSON serialization
+    private val json = Json {
+        ignoreUnknownKeys = true
+        coerceInputValues = true
+        encodeDefaults = true
+        isLenient = true
+    }
+
+    // Authentication interceptor to add token to requests
+    private val authInterceptor = Interceptor { chain ->
+        val originalRequest = chain.request()
+
+        val response = chain.proceed(originalRequest)
+        response.close()
+        // Get token from token provider
+        val token = tokenStorage.getAccessToken()
+
+        // If token exists, add it to the request header
+        val requestBuilder = if (token != null) {
+            originalRequest.newBuilder()
+                .header("Authorization", "Bearer $token")
+                .method(originalRequest.method, originalRequest.body)
+        } else {
+            originalRequest.newBuilder()
+        }
+
+        val request = requestBuilder.build()
+        chain.proceed(request)
+    }
+
+    private val tokenRefreshInterceptor = Interceptor { chain ->
+        val originalRequest = chain.request()
+        var response = chain.proceed(originalRequest)
+
+        // If 401 Unauthorized, attempt token refresh
+        if (response.code == 401) {
+            response.close()
+
+            // Track the new token for retry
+            var newToken: String? = null
+
+            synchronized(this) {
+                val tempOkHttp = OkHttpClient.Builder()
+                    .addInterceptor(loggingInterceptor)
+                    .build()
+
+                val tempRetrofit = retrofit.newBuilder().client(tempOkHttp).build()
+                val authApiService = tempRetrofit.create(AuthApiService::class.java)
+
+                val refreshToken = tokenStorage.getRefreshToken()
+                if (refreshToken != null) {
+                    try {
+                        // Call refresh token API
+                        val tokenResponse = runBlocking {
+                            authApiService.refreshToken("Bearer $refreshToken")
+                        }.execute()
+
+                        if (tokenResponse.isSuccessful) {
+                            val newTokens = tokenResponse.body()
+                            if (newTokens != null) {
+                                tokenStorage.saveTokens(
+                                    newTokens.accessToken,
+                                    newTokens.refreshToken
+                                )
+                                newToken = tokenStorage.getAccessToken()
+                            }
+                        }
+                    } catch (e: Exception) {
+                        // Handle refresh failure
+                    }
+                }
+            }
+
+            // If we got a new token, retry the original request
+            if (newToken != null) {
+                val newRequest = originalRequest.newBuilder()
+                    .header("Authorization", "Bearer $newToken")
+                    .build()
+                response = chain.proceed(newRequest)
+            }
+        }
+        // Return either the original 401 response or the new response from the retry
+        response
+    }
+
+    // Create logging interceptor for debugging
+    private val loggingInterceptor = HttpLoggingInterceptor().apply {
+        level = HttpLoggingInterceptor.Level.BODY
+    }
+
+    private val tempOkHttp = OkHttpClient.Builder()
+        .addInterceptor(loggingInterceptor)
+        .build()
+
+    private val tempRetrofit = Retrofit.Builder()
+        .baseUrl(BASE_URL)
+        .client(tempOkHttp)
+        .addConverterFactory(json.asConverterFactory("application/json".toMediaType()))
+        .build()
+
+    private val authApiService = tempRetrofit.create(AuthApiService::class.java)
+    private val authenticator = Authenticator { _, response ->
+
+        val oldRefreshToken = tokenStorage.getRefreshToken()
+        if (oldRefreshToken == null) return@Authenticator null
+
+        val (access, refresh) = authApiService.refreshToken("Bearer $oldRefreshToken")
+            .execute().body() ?: return@Authenticator null
+        tokenStorage.saveTokens(access, refresh)
+
+        val newToken = tokenStorage.getAccessToken()
+        return@Authenticator if (newToken != null) {
+            response.request.newBuilder()
+                .header("Authorization", "Bearer $newToken")
+                .build()
+        } else {
+            null
+        }
+    }
+
+
+    // Configure OkHttpClient with interceptors
+    private val okHttpClient = OkHttpClient.Builder()
+        .addInterceptor(authInterceptor)
+//        .addInterceptor(tokenRefreshInterceptor)
+        .addInterceptor(loggingInterceptor)
+        .authenticator(authenticator)
+        .connectTimeout(TIMEOUT, TimeUnit.SECONDS)
+        .readTimeout(TIMEOUT, TimeUnit.SECONDS)
+        .writeTimeout(TIMEOUT, TimeUnit.SECONDS)
+        .build()
+
+    // Create Retrofit instance with the OkHttpClient
+    private val retrofit: Retrofit = Retrofit.Builder()
+        .baseUrl(BASE_URL)
+        .client(okHttpClient)
+        .addConverterFactory(json.asConverterFactory("application/json".toMediaType()))
+        .build()
+
+
+
+    // Function to create API services
+    fun <T> createService(serviceClass: Class<T>): T {
+        return retrofit.create(serviceClass)
+    }
+}

@@ -134,7 +134,7 @@ private fun Error(msg: String, modifier: Modifier = Modifier) {
 }
 
 @Composable
-private fun Loading(modifier: Modifier = Modifier) {
+fun Loading(modifier: Modifier = Modifier) {
     Box(modifier, contentAlignment = Alignment.Center) {
         CircularProgressIndicator()
     }

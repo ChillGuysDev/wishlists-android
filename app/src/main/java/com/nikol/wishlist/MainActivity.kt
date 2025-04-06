@@ -4,6 +4,8 @@ import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
+import androidx.compose.foundation.layout.calculateEndPadding
+import androidx.compose.foundation.layout.calculateStartPadding
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material.BottomNavigation
@@ -14,8 +16,12 @@ import androidx.compose.material.icons.filled.Home
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.Stable
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.unit.LayoutDirection
+import androidx.compose.ui.unit.dp
 import androidx.navigation.NavGraph.Companion.findStartDestination
 import androidx.navigation.NavHostController
 import androidx.navigation.compose.NavHost
@@ -39,34 +45,52 @@ class MainActivity : ComponentActivity() {
         setContent {
             WishlistsTheme {
                 val navController = rememberNavController()
-                Scaffold(modifier = Modifier.fillMaxSize(), bottomBar = {
-                    BottomNavigation {
-                        val navBackStackEntry by navController.currentBackStackEntryAsState()
-                        val currentDestination = navBackStackEntry?.destination
-                        topLevelRoutes.forEach { topLevelRoute ->
-                            BottomNavigationItem(
-                                icon = {
-                                    Icon(
-                                        Icons.Default.Home,
-                                        contentDescription = ""
-                                    )
-                                },
-                                label = { Text(topLevelRoute.routeName) },
-                                selected = currentDestination?.route == topLevelRoute.routeName,
-                                onClick = {
-                                    navController.navigate(topLevelRoute.routeName) {
-                                        popUpTo(navController.graph.findStartDestination().id) {
-                                            saveState = true
+
+                val navBackStackEntry by navController.currentBackStackEntryAsState()
+                val currentDestination = navBackStackEntry?.destination
+                val currentRoute = currentDestination?.route
+                val showBottomBar = remember(currentRoute) {
+                    currentRoute in topLevelRoutes.map { it.routeName }
+                }
+                Scaffold(
+                    modifier = Modifier.fillMaxSize(),
+                    bottomBar = {
+                        if(showBottomBar) {
+                            BottomNavigation {
+                                topLevelRoutes.forEach { topLevelRoute ->
+                                    BottomNavigationItem(
+                                        icon = {
+                                            Icon(
+                                                Icons.Default.Home,
+                                                contentDescription = ""
+                                            )
+                                        },
+                                        label = { Text(topLevelRoute.routeName) },
+                                        selected = currentDestination?.route == topLevelRoute.routeName,
+                                        onClick = {
+                                            navController.navigate(topLevelRoute.routeName) {
+                                                popUpTo(navController.graph.findStartDestination().id) {
+                                                    saveState = true
+                                                }
+                                                launchSingleTop = true
+                                                restoreState = true
+                                            }
                                         }
-                                        launchSingleTop = true
-                                        restoreState = true
-                                    }
+                                    )
                                 }
-                            )
+                            }
                         }
                     }
-                }) { innerPadding ->
-                    AppNavHost(Modifier.padding(innerPadding), navController)
+                ) { innerPadding ->
+                    AppNavHost(
+                        modifier = Modifier.padding(
+                            bottom = if (showBottomBar) innerPadding.calculateBottomPadding() else 0.dp,
+                            top = innerPadding.calculateTopPadding(),
+                            start = innerPadding.calculateStartPadding(LayoutDirection.Ltr),
+                            end = innerPadding.calculateEndPadding(LayoutDirection.Ltr)
+                        ),
+                        navController = navController
+                    )
                 }
             }
         }
@@ -104,4 +128,16 @@ private fun homeNavigation(onCreateList: () -> Unit): HomeNavigationListener {
             onCreateList()
         }
     }
+}
+
+@Stable
+class BottomBarVisibilityState(
+    private val navController: NavHostController
+) {
+    val isVisible: Boolean
+        @Composable get() {
+            val navBackStackEntry by navController.currentBackStackEntryAsState()
+            val currentRoute = navBackStackEntry?.destination?.route
+            return currentRoute in topLevelRoutes.map { it.routeName }
+        }
 }
