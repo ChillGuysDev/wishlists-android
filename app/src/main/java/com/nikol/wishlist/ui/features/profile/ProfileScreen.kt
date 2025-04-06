@@ -202,12 +202,14 @@ class ProfileViewModel @Inject constructor(
     val state: StateFlow<ProfileScreenState> = _state
 
     init {
-        _state.tryEmit(ProfileScreenState.Loading)
-        if (!handleAuth()) handleContentState()
+        viewModelScope.launch {
+            _state.tryEmit(ProfileScreenState.Loading)
+            if (!handleAuth()) handleContentState()
 
+        }
     }
 
-    private fun handleAuth(): Boolean {
+    private suspend fun handleAuth(): Boolean {
         return if (authManager.isUserLogin()) {
             false
         } else {
@@ -235,7 +237,7 @@ class ProfileViewModel @Inject constructor(
         }
     }
 
-    fun onLogoutClick() {
+    suspend fun onLogoutClick() {
         authManager.logout()
         _state.tryEmit(ProfileScreenState.AuthenticateContent())
     }

@@ -1,10 +1,9 @@
 package com.nikol.wishlist.network
 
 import com.nikol.wishlist.network.tokenprovider.AuthTokenProvider
-import com.nikol.wishlist.network.tokenprovider.KeystoreTokenProvider
+import com.nikol.wishlist.network.tokenprovider.DataStoreTokenProvider
 import dagger.Binds
 import dagger.Module
-import dagger.Provides
 import dagger.hilt.InstallIn
 import dagger.hilt.components.SingletonComponent
 import javax.inject.Singleton
@@ -15,6 +14,6 @@ abstract class AuthModule {
     @Binds
     @Singleton
     abstract fun bindAuthTokenProvider(
-        keystoreTokenProvider: KeystoreTokenProvider
+        keystoreTokenProvider: DataStoreTokenProvider
     ): AuthTokenProvider
 }
