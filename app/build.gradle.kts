@@ -11,10 +11,6 @@ plugins {
 val localProperties = Properties()
 localProperties.load(rootProject.file("local.properties").inputStream())
 
-val ipAddress = localProperties["BASE_URL"].toString()
-    .replace(Regex("https?://"), "")
-    .replace(Regex("(:\\d+)?/.*"), "")
-
 android {
     namespace = "com.nikol.wishlist"
     compileSdk = 35
@@ -105,15 +101,4 @@ dependencies {
 
 kapt {
     correctErrorTypes = true
-}
-
-tasks.register<Copy>("replaceIpPlaceholder") {
-    from("src/main/res/xml")
-    into("build/generated/res/xml")
-    include("network_security_config.xml")
-    filter { line -> line.replace("@IP_PLACEHOLDER@", ipAddress) }
-}
-
-tasks.named("preBuild") {
-    dependsOn("replaceIpPlaceholder")
 }
