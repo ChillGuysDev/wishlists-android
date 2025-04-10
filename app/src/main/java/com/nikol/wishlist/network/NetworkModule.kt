@@ -27,4 +27,10 @@ class NetworkModule {
     fun provideWishlistApiService(retrofitClient: RetrofitClient): WishlistApiService {
         return retrofitClient.createService(WishlistApiService::class.java)
     }
+
+    @Provides
+    @Singleton
+    fun provideUserApiService(retrofitClient: RetrofitClient): UserApiService {
+        return retrofitClient.createService(UserApiService::class.java)
+    }
 }
