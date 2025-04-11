@@ -3,9 +3,9 @@ package com.nikol.wishlist.ui.features.profile
 import android.content.Context
 import android.net.Uri
 import android.webkit.MimeTypeMap
-import androidx.core.net.toFile
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.nikol.wishlist.domain.ImageUrlProvider
 import com.nikol.wishlist.domain.auth.AuthInteractor
 import com.nikol.wishlist.domain.user.User
 import com.nikol.wishlist.domain.user.UserInteractor
@@ -18,8 +18,6 @@ import java.io.File
 import java.io.FileInputStream
 import java.io.FileOutputStream
 import javax.inject.Inject
-import kotlin.io.path.createTempFile
-import kotlin.io.path.outputStream
 
 interface ProfileUserAvatarListener {
     fun onAvatarPickClick(uri: Uri)
@@ -52,6 +50,7 @@ class ProfileViewModel @Inject constructor(
     @ApplicationContext private val context: Context,
     private val authInteractor: AuthInteractor,
     private val userInteractor: UserInteractor,
+    private val imageUrlProvider: ImageUrlProvider,
 ) : ViewModel(), ProfileListener {
     private val _state: MutableStateFlow<ProfileScreenState> =
         MutableStateFlow(ProfileScreenState.Empty)
@@ -83,7 +82,7 @@ class ProfileViewModel @Inject constructor(
                 return@launch
             }
 
-            _state.tryEmit(user.toProfileScreenState())
+            _state.tryEmit(user.toProfileScreenState(imageUrlProvider::getImageUrl))
         }
     }
 
@@ -135,9 +134,9 @@ class ProfileViewModel @Inject constructor(
     }
 }
 
-private fun User.toProfileScreenState(): ProfileScreenState.Content {
+private fun User.toProfileScreenState(urlProvider: (prefix: String) -> String): ProfileScreenState.Content {
     return ProfileScreenState.Content(
-        avatarUrl = avatarUrl,
+        avatarUrl = urlProvider(avatarUrl),
         name = name,
         email = email,
         bio = bio,
