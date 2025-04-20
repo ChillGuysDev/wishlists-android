@@ -1,3 +1,6 @@
 <resources>
     <string name="app_name">Wishlists</string>
+    <string name="create_wishlist_add_item_title">Add item</string>
+    <string name="create_wishlist_add_item_cancel_title">Cancel</string>
+    <string name="create_wishlist_create_title">Create Wishlist</string>
 </resources>

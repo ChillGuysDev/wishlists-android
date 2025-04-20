@@ -2,11 +2,13 @@ package com.nikol.wishlist.ui.features.createWishlist
 
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material3.Button
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.ModalBottomSheet
+import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextField
 import androidx.compose.runtime.Composable
@@ -16,11 +18,15 @@ import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
+import com.nikol.wishlist.R
 import com.nikol.wishlist.ui.features.profile.WishlistItemInput
 import com.nikol.wishlist.ui.theme.WishlistsTheme
+import com.nikol.wishlist.ui.uikit.ButtonRegular
+import com.nikol.wishlist.ui.uikit.ButtonSmall
 
 fun interface CreateWishlistBottomSheetListener {
     fun onCreateWishlist(
@@ -59,18 +65,20 @@ private fun CreateWishlistContent(
     var isAddingItem by rememberSaveable { mutableStateOf(false) }
 
     Column(modifier, verticalArrangement = Arrangement.spacedBy(16.dp)) {
-        TextField(
+        OutlinedTextField(
             value = name,
             onValueChange = { name = it },
             label = { Text("Name") },
             placeholder = { Text("Enter wishlist name") },
+            modifier = Modifier.fillMaxWidth(),
         )
 
-        TextField(
+        OutlinedTextField(
             value = description,
             onValueChange = { description = it },
             label = { Text("Description") },
             placeholder = { Text("Enter wishlist description") },
+            modifier = Modifier.fillMaxWidth(),
         )
 
         if (isAddingItem) {
@@ -86,22 +94,24 @@ private fun CreateWishlistContent(
             )
 
         } else {
-            Button(onClick = { isAddingItem = true }) {
-                Text("Add Item")
-            }
+            ButtonSmall(
+                stringResource(R.string.create_wishlist_add_item_title),
+                onClick = { isAddingItem = true },
+                modifier = Modifier.fillMaxWidth(),
+            )
         }
 
-        Button(
+        ButtonRegular(
+            stringResource(R.string.create_wishlist_create_title),
             onClick = {
                 listener.onCreateWishlist(
                     name = name,
                     description = description,
                     items = items
                 )
-            }
-        ) {
-            Text("Create Wishlist")
-        }
+            },
+            modifier = Modifier.fillMaxWidth(),
+        )
     }
 }
 
@@ -117,7 +127,7 @@ private fun CreateWishlistItemInput(
     var url by rememberSaveable { mutableStateOf("") }
 
     Column(modifier, horizontalAlignment = Alignment.CenterHorizontally) {
-        TextField(
+        OutlinedTextField(
             value = name,
             onValueChange = { name = it },
             label = { Text("Name") },
@@ -125,7 +135,7 @@ private fun CreateWishlistItemInput(
             modifier = Modifier.fillMaxWidth(),
         )
 
-        TextField(
+        OutlinedTextField(
             value = description,
             onValueChange = { description = it },
             label = { Text("Description") },
@@ -133,7 +143,7 @@ private fun CreateWishlistItemInput(
             modifier = Modifier.fillMaxWidth(),
         )
 
-        TextField(
+        OutlinedTextField(
             value = price,
             onValueChange = { price = it },
             label = { Text("Price") },
@@ -144,7 +154,7 @@ private fun CreateWishlistItemInput(
             modifier = Modifier.fillMaxWidth(),
         )
 
-        TextField(
+        OutlinedTextField(
             value = url,
             onValueChange = { url = it },
             label = { Text("URL") },
@@ -152,20 +162,28 @@ private fun CreateWishlistItemInput(
             modifier = Modifier.fillMaxWidth(),
         )
 
-        Button(
-            onClick = {
-                onComplete(WishlistItemInput(name, description, null, price.toIntOrNull(), url))
-            }) {
-            Text("Add Item")
-        }
-
-        Button(onClick = onCancel) {
-            Text("Cancel")
+        Row(horizontalArrangement = Arrangement.spacedBy(16.dp)) {
+            ButtonSmall(text = stringResource(R.string.create_wishlist_add_item_cancel_title),
+                onClick = onCancel,
+                modifier = Modifier.weight(1f),
+            )
+            ButtonSmall(
+                text = stringResource(R.string.create_wishlist_add_item_title),
+                onClick = {
+                    onComplete(WishlistItemInput(
+                        name = name,
+                        description = description,
+                        imageUrl = null,
+                        price = price.toIntOrNull(),
+                        url = url
+                    ))
+                },
+                modifier = Modifier.weight(1f),
+            )
         }
     }
 }
 
-// make preview
 @Preview
 @Composable
 fun CreateWishlistBottomSheetPreview() {
@@ -173,6 +191,18 @@ fun CreateWishlistBottomSheetPreview() {
         CreateWishlistContent(
             modifier = Modifier.fillMaxWidth(),
             listener = { _, _, _ -> }
+        )
+    }
+}
+
+@Preview
+@Composable
+fun CreateWishlistItemInputPreview() {
+    WishlistsTheme {
+        CreateWishlistItemInput(
+            modifier = Modifier.fillMaxWidth(),
+            onComplete = {},
+            onCancel = {}
         )
     }
 }

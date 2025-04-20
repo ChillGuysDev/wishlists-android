@@ -42,7 +42,7 @@ val Typography = Typography(
     ),
     labelMedium = TextStyle(
         fontSize = 12.sp,
-        fontWeight = FontWeight.Medium,
+        fontWeight = FontWeight.Normal,
         color = TextPrimary
     ),
     labelSmall = TextStyle(
