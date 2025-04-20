@@ -24,6 +24,7 @@ import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.LayoutDirection
 import androidx.compose.ui.unit.dp
+import androidx.navigation.NavDestination.Companion.hasRoute
 import androidx.navigation.NavGraph.Companion.findStartDestination
 import androidx.navigation.NavHostController
 import androidx.navigation.compose.NavHost
@@ -36,6 +37,9 @@ import com.nikol.wishlist.ui.features.home.HomeNavigationListener
 import com.nikol.wishlist.ui.features.home.HomeScreen
 import com.nikol.wishlist.ui.features.mywishlist.MyWishlistScreen
 import com.nikol.wishlist.ui.features.profile.ProfileScreen
+import com.nikol.wishlist.ui.features.profile.profileNavigationListener
+import com.nikol.wishlist.ui.features.wishlist.WishlistScreen
+import com.nikol.wishlist.ui.features.wishlist.wishlistNavigationListener
 import com.nikol.wishlist.ui.theme.WishlistsTheme
 import dagger.hilt.android.AndroidEntryPoint
 
@@ -50,9 +54,8 @@ class MainActivity : ComponentActivity() {
 
                 val navBackStackEntry by navController.currentBackStackEntryAsState()
                 val currentDestination = navBackStackEntry?.destination
-                val currentRoute = currentDestination?.route
-                val showBottomBar = remember(currentRoute) {
-                    currentRoute in topLevelRoutes.map { it.routeName }
+                val showBottomBar = remember(currentDestination) {
+                    topLevelRoutes.any { currentDestination?.hasRoute(it::class) == true }
                 }
                 Scaffold(
                     modifier = Modifier.fillMaxSize(),
@@ -68,9 +71,9 @@ class MainActivity : ComponentActivity() {
                                             )
                                         },
                                         label = { Text(topLevelRoute.routeName) },
-                                        selected = currentDestination?.route == topLevelRoute.routeName,
+                                        selected = currentDestination?.hasRoute(topLevelRoute::class) == true,
                                         onClick = {
-                                            navController.navigate(topLevelRoute.routeName) {
+                                            navController.navigate(topLevelRoute) {
                                                 popUpTo(navController.graph.findStartDestination().id) {
                                                     saveState = true
                                                 }
@@ -108,9 +111,9 @@ fun AppNavHost(
     NavHost(
         modifier = modifier,
         navController = navController,
-        startDestination = startDestination.routeName
+        startDestination = startDestination
     ) {
-        composable(ScreenRoute.Home.routeName) {
+        composable<ScreenRoute.Home> {
             HomeScreen(
                 navigationListener = homeNavigation {
                     navController.navigate(
@@ -119,8 +122,22 @@ fun AppNavHost(
                 }
             )
         }
-        composable(ScreenRoute.MyWishlist.routeName) { MyWishlistScreen(onNavigateBack = { navController.navigateUp() }) }
-        composable(ScreenRoute.Profile.routeName) { ProfileScreen() }
+        composable<ScreenRoute.MyWishlist> { MyWishlistScreen(onNavigateBack = { navController.navigateUp() }) }
+        composable<ScreenRoute.Profile> {
+            ProfileScreen(
+                profileNavigationListener {
+                    navController.navigate(ScreenRoute.Wishlist(it)) {
+                        popUpTo(ScreenRoute.Profile) {
+                            saveState = true
+                        }
+                        restoreState = true
+                    }
+                }
+            )
+        }
+        composable<ScreenRoute.Wishlist> { backStackEntry ->
+            WishlistScreen(wishlistNavigationListener { navController.navigateUp() })
+        }
     }
 }
 

@@ -60,9 +60,24 @@ import com.nikol.wishlist.ui.uikit.auth.LoginForm
 import com.nikol.wishlist.ui.uikit.auth.RegisterForm
 import okhttp3.internal.toImmutableList
 
+internal fun profileNavigationListener(onOpenWishlistClick: (Int) -> Unit): ProfileNavigationListener {
+    return object : ProfileNavigationListener {
+        override fun openWishlist(wishlistId: Int) {
+            onOpenWishlistClick(wishlistId)
+        }
+    }
+}
+
+internal fun interface ProfileNavigationListener {
+    fun openWishlist(wishlistId: Int)
+}
+
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun ProfileScreen(viewModel: ProfileViewModel = hiltViewModel()) {
+internal fun ProfileScreen(
+    navigationListener: ProfileNavigationListener,
+    viewModel: ProfileViewModel = hiltViewModel()
+) {
     val state by viewModel.state.collectAsState()
     val scrollBehavior = TopAppBarDefaults.enterAlwaysScrollBehavior()
 
@@ -96,21 +111,32 @@ fun ProfileScreen(viewModel: ProfileViewModel = hiltViewModel()) {
             listener = viewModel,
             modifier = Modifier
                 .fillMaxSize()
-                .padding(paddingValues)
+                .padding(paddingValues),
+            onWishlistClick = { wishlistId ->
+                navigationListener.openWishlist(wishlistId)
+            }
         )
     }
 }
 
 @Composable
 private fun ProfileScreenContent(
-    state: ProfileScreenState, listener: ProfileListener, modifier: Modifier = Modifier
+    state: ProfileScreenState,
+    listener: ProfileListener,
+    modifier: Modifier = Modifier,
+    onWishlistClick: (Int) -> Unit,
 ) {
     AnimatedContent(state, modifier) { targetState ->
         when (targetState) {
             is ProfileScreenState.Loading -> Loading()
             is ProfileScreenState.Empty -> Empty()
             is ProfileScreenState.AuthenticateContent -> AuthContent(listener)
-            is ProfileScreenState.Content -> Content(targetState, listener)
+            is ProfileScreenState.Content -> Content(
+                targetState,
+                listener,
+                Modifier,
+                onWishlistClick
+            )
         }
     }
 
@@ -144,7 +170,8 @@ private fun AuthContent(listener: ProfileAuthListener, modifier: Modifier = Modi
 
 @Composable
 private fun Content(
-    state: ProfileScreenState.Content, listener: ProfileListener, modifier: Modifier = Modifier
+    state: ProfileScreenState.Content, listener: ProfileListener, modifier: Modifier = Modifier,
+    onWishlistClick: (Int) -> Unit,
 ) {
     var isShowBottomSheet by rememberSaveable { mutableStateOf(false) }
 
@@ -178,7 +205,7 @@ private fun Content(
             }
             items(state.wishlists) { wishlist ->
                 WishlistCardItem(
-                    onClick = { /* onWishlistClick(wishlist.id) */ },
+                    onClick = { onWishlistClick(wishlist.id) },
                     modifier = Modifier.padding(8.dp),
                     item = wishlist
                 )
@@ -328,7 +355,7 @@ private fun ProfileScreenPreview() {
             bio = "This is a bio",
             birthDate = "10.06.1999",
             wishlists = dummyWishlistList,
-        ), listener = getProfileListenerStub(), modifier = Modifier.fillMaxSize()
+        ), listener = getProfileListenerStub(), modifier = Modifier.fillMaxSize(), {}
     )
 }
 
