@@ -1,12 +1,14 @@
 package com.nikol.wishlist.domain
 
 interface ImageUrlProvider {
-    fun getImageUrl(imagePath: String): String
+    fun getImageUrl(imagePath: String?): String?
 }
 class ImageUrlProviderImpl(
     private val baseUrl: String,
 ) : ImageUrlProvider {
-    override fun getImageUrl(imagePath: String): String {
+    override fun getImageUrl(imagePath: String?): String? {
+        if (imagePath.isNullOrBlank()) return null
+
         return "${baseUrl.removeSuffix("/")}$imagePath"
     }
 }

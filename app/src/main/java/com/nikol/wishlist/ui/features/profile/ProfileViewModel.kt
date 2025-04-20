@@ -7,16 +7,16 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.nikol.wishlist.domain.ImageUrlProvider
 import com.nikol.wishlist.domain.auth.AuthInteractor
-import com.nikol.wishlist.domain.user.User
 import com.nikol.wishlist.domain.user.UserInteractor
+import com.nikol.wishlist.domain.wishlist.CreateWishlistInput
+import com.nikol.wishlist.domain.wishlist.WishlistsInteractor
+import com.nikol.wishlist.utils.copyFileFromUri
 import dagger.hilt.android.lifecycle.HiltViewModel
 import dagger.hilt.android.qualifiers.ApplicationContext
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.launch
 import java.io.File
-import java.io.FileInputStream
-import java.io.FileOutputStream
 import javax.inject.Inject
 
 interface ProfileUserAvatarListener {
@@ -25,6 +25,8 @@ interface ProfileUserAvatarListener {
 }
 
 interface ProfileAuthListener {
+    fun onWishlistCreateClick(name: String, description: String, items: List<WishlistItemInput>)
+    fun onAddWishlistItemClick(wishlistId: Int, item: WishlistItemInput)
     fun onLoginClick(username: String, password: String)
     fun onRegisterClick(username: String, password: String, email: String)
     fun onLogoutClick()
@@ -42,6 +44,7 @@ sealed interface ProfileScreenState {
         val email: String,
         val bio: String,
         val birthDate: String,
+        val wishlists: List<WishlistUi> = emptyList()
     ) : ProfileScreenState
 }
 
@@ -51,6 +54,7 @@ class ProfileViewModel @Inject constructor(
     private val authInteractor: AuthInteractor,
     private val userInteractor: UserInteractor,
     private val imageUrlProvider: ImageUrlProvider,
+    private val wishlistsInteractor: WishlistsInteractor,
 ) : ViewModel(), ProfileListener {
     private val _state: MutableStateFlow<ProfileScreenState> =
         MutableStateFlow(ProfileScreenState.Empty)
@@ -82,7 +86,42 @@ class ProfileViewModel @Inject constructor(
                 return@launch
             }
 
-            _state.tryEmit(user.toProfileScreenState(imageUrlProvider::getImageUrl))
+            val wishlists = loadUserWishlists()
+
+            val state = ProfileScreenState.Content(
+                avatarUrl = imageUrlProvider.getImageUrl(user.avatarUrl),
+                name = user.name,
+                email = user.email,
+                bio = user.bio,
+                birthDate = user.birthDate,
+                wishlists = wishlists
+            )
+            _state.tryEmit(state)
+        }
+    }
+
+    override fun onWishlistCreateClick(
+        name: String,
+        description: String,
+        items: List<WishlistItemInput>
+    ) {
+        viewModelScope.launch {
+            wishlistsInteractor.createWishlist(
+                input = CreateWishlistInput(
+                    name = name,
+                    description = description
+                ),
+                items = items.map { it.toDomain() },
+            )
+        }
+    }
+
+    override fun onAddWishlistItemClick(wishlistId: Int, item: WishlistItemInput) {
+        viewModelScope.launch {
+            wishlistsInteractor.addItemToWishlist(
+                wishlistId = wishlistId,
+                input = item.toDomain()
+            )
         }
     }
 
@@ -132,31 +171,10 @@ class ProfileViewModel @Inject constructor(
             _state.tryEmit(ProfileScreenState.AuthenticateContent())
         }
     }
-}
 
-private fun User.toProfileScreenState(urlProvider: (prefix: String) -> String): ProfileScreenState.Content {
-    return ProfileScreenState.Content(
-        avatarUrl = urlProvider(avatarUrl),
-        name = name,
-        email = email,
-        bio = bio,
-        birthDate = birthDate
-    )
-}
-
-private fun Context.copyFileFromUri(context: Context, uri: Uri, destinationFile: File): Boolean {
-    return try {
-        context.contentResolver.openFileDescriptor(uri, "r")?.use { parcelFileDescriptor ->
-            val fileDescriptor = parcelFileDescriptor.fileDescriptor
-            FileInputStream(fileDescriptor).use { inputStream ->
-                FileOutputStream(destinationFile).use { outputStream ->
-                    inputStream.copyTo(outputStream)
-                }
-            }
-        }
-        true
-    } catch (e: Exception) {
-        e.printStackTrace()
-        false
+    private suspend fun loadUserWishlists() = try {
+        wishlistsInteractor.getUserWishlists().toUi()
+    } catch (e: Throwable) {
+        emptyList()
     }
 }

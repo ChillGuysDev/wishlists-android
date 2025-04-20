@@ -7,7 +7,10 @@ import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.aspectRatio
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.sizeIn
+import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
@@ -35,7 +38,8 @@ fun UserAvatar(
 
     Box(
         modifier = Modifier
-            .size(100.dp)
+            .size(50.dp)
+            .aspectRatio(1f)
             .clip(CircleShape)
             .clickable {
                 if (imageUrl.isNullOrBlank()) {
