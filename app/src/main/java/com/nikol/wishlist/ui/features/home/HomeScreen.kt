@@ -13,7 +13,6 @@ import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.TextField
-import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.FloatingActionButton
 import androidx.compose.material3.Icon
@@ -32,8 +31,9 @@ import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
+import com.nikol.wishlist.core.ui.Loading
+import com.nikol.wishlist.core.ui.WishlistCard
 import com.nikol.wishlist.ui.features.home.data.generateMockWishlists
-import com.nikol.wishlist.ui.uikit.WishlistCard
 
 
 interface HomeScreenListener {
@@ -78,12 +78,18 @@ private fun Content(
             SearchField(
                 onSearch, Modifier
                     .fillMaxWidth()
-                    .padding(horizontal = 16.dp).padding(top = 16.dp)
+                    .padding(horizontal = 16.dp)
+                    .padding(top = 16.dp)
             )
             LazyColumn(
                 state = listState,
                 verticalArrangement = Arrangement.spacedBy(16.dp),
-                contentPadding = PaddingValues(top = 16.dp, bottom = 40.dp, start = 16.dp, end = 16.dp)
+                contentPadding = PaddingValues(
+                    top = 16.dp,
+                    bottom = 40.dp,
+                    start = 16.dp,
+                    end = 16.dp
+                )
             ) {
                 items(items = state.wishlists, key = { it.id }) {
                     WishlistCard(
@@ -130,13 +136,6 @@ private fun SearchField(onSearch: (query: String) -> Unit, modifier: Modifier = 
 private fun Error(msg: String, modifier: Modifier = Modifier) {
     Box(modifier, contentAlignment = Alignment.Center) {
         Text(msg, style = MaterialTheme.typography.displayLarge)
-    }
-}
-
-@Composable
-fun Loading(modifier: Modifier = Modifier) {
-    Box(modifier, contentAlignment = Alignment.Center) {
-        CircularProgressIndicator()
     }
 }
 

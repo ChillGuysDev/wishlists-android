@@ -3,13 +3,15 @@ import java.util.Properties
 plugins {
     alias(libs.plugins.android.application)
     alias(libs.plugins.kotlin.android)
-    alias(libs.plugins.kotlin.compose)
+    alias(libs.plugins.compose.compiler)
     kotlin("plugin.serialization") version "2.1.20"
     id("kotlin-kapt")
     id("com.google.dagger.hilt.android")
 }
+
 val localProperties = Properties()
 localProperties.load(rootProject.file("local.properties").inputStream())
+
 
 android {
     namespace = "com.nikol.wishlist"
@@ -56,6 +58,8 @@ android {
     }
 }
 
+
+
 dependencies {
 
     implementation(libs.androidx.core.ktx)
@@ -97,6 +101,14 @@ dependencies {
     implementation("com.squareup.retrofit2:converter-kotlinx-serialization:2.11.0")
 
     implementation("androidx.datastore:datastore-preferences:1.1.4")
+
+    implementation(project(":core:core-domain"))
+    implementation(project(":core:core-data"))
+    implementation(project(":core:core-ui"))
+
+    implementation(project(":features:profile:profile-api"))
+    implementation(project(":features:profile:profile-domain"))
+    implementation(project(":features:profile:profile-ui"))
 
 }
 

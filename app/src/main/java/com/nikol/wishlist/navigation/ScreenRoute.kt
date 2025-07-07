@@ -1,5 +1,6 @@
 package com.nikol.wishlist.navigation
 
+import com.nikol.wishlist.profile.ui.ScreenRouteProfile
 import kotlinx.serialization.Serializable
 
 enum class Screens {
@@ -12,9 +13,9 @@ sealed class ScreenRoute(val routeName: String) {
     @Serializable
     data object MyWishlist: ScreenRoute(Screens.MY_WISHLIST.name)
     @Serializable
-    data object Profile: ScreenRoute(Screens.PROFILE.name)
+    data object Profile: ScreenRoute(ScreenRouteProfile)
     @Serializable
-    data class Wishlist(val id: Int): ScreenRoute("wishlist/$id")
+    data class Wishlist(val id: Long): ScreenRoute("wishlist/$id")
 }
 
 val topLevelRoutes = listOf(ScreenRoute.Home, ScreenRoute.MyWishlist, ScreenRoute.Profile)

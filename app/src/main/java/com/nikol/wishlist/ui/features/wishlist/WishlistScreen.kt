@@ -13,7 +13,7 @@ import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.hilt.navigation.compose.hiltViewModel
-import com.nikol.wishlist.ui.features.home.Loading
+import com.nikol.wishlist.core.ui.Loading
 
 internal fun wishlistNavigationListener(
     onBackClick: () -> Unit

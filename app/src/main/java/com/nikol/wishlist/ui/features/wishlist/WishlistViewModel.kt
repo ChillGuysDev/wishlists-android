@@ -4,9 +4,9 @@ import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import androidx.navigation.toRoute
-import com.nikol.wishlist.domain.wishlist.WishlistsInteractor
+import com.nikol.wishlist.core.domain.wishlist.WishlistsInteractor
+import com.nikol.wishlist.core.ui.models.toUi
 import com.nikol.wishlist.navigation.ScreenRoute
-import com.nikol.wishlist.ui.features.profile.toUi
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.launch
@@ -16,9 +16,9 @@ import javax.inject.Inject
 internal class WishlistViewModel @Inject constructor(
     savedStateHandle: SavedStateHandle,
     private val wishlistInteractor: WishlistsInteractor,
-): ViewModel() {
+) : ViewModel() {
 
-    private val wishlistId: Int = savedStateHandle.toRoute<ScreenRoute.Wishlist>().id
+    private val wishlistId: Long = savedStateHandle.toRoute<ScreenRoute.Wishlist>().id
 
     val state = MutableStateFlow<WishlistState>(WishlistState.Loading)
 

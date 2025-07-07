@@ -1,6 +1,6 @@
 package com.nikol.wishlist.ui.features.home.domain
 
-import com.nikol.wishlist.network.tokenprovider.AuthTokenProvider
+import com.nikol.wishlist.core.domain.tokenprovider.AuthTokenProvider
 import com.nikol.wishlist.ui.features.home.data.WishlistsRepository
 import kotlinx.coroutines.delay
 import javax.inject.Inject

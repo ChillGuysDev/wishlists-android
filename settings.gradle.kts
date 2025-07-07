@@ -21,3 +21,10 @@ dependencyResolutionManagement {
 
 rootProject.name = "Wishlists"
 include(":app")
+include(":core:core-data")
+include(":core:core-domain")
+include(":core:core-ui")
+include(":features:profile:profile-api")
+include(":features:profile:profile-ui")
+include(":features:profile:profile-domain")
+include(":core:core-utils")

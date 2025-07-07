@@ -31,16 +31,15 @@ import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
+import com.nikol.wishlist.core.ui.theme.WishlistsTheme
 import com.nikol.wishlist.navigation.ScreenRoute
 import com.nikol.wishlist.navigation.topLevelRoutes
+import com.nikol.wishlist.profile.ui.profileScreen
 import com.nikol.wishlist.ui.features.home.HomeNavigationListener
 import com.nikol.wishlist.ui.features.home.HomeScreen
 import com.nikol.wishlist.ui.features.mywishlist.MyWishlistScreen
-import com.nikol.wishlist.ui.features.profile.ProfileScreen
-import com.nikol.wishlist.ui.features.profile.profileNavigationListener
 import com.nikol.wishlist.ui.features.wishlist.WishlistScreen
 import com.nikol.wishlist.ui.features.wishlist.wishlistNavigationListener
-import com.nikol.wishlist.ui.theme.WishlistsTheme
 import dagger.hilt.android.AndroidEntryPoint
 
 @AndroidEntryPoint
@@ -60,7 +59,7 @@ class MainActivity : ComponentActivity() {
                 Scaffold(
                     modifier = Modifier.fillMaxSize(),
                     bottomBar = {
-                        if(showBottomBar) {
+                        if (showBottomBar) {
                             BottomNavigation(WindowInsets.navigationBars) {
                                 topLevelRoutes.forEach { topLevelRoute ->
                                     BottomNavigationItem(
@@ -123,18 +122,28 @@ fun AppNavHost(
             )
         }
         composable<ScreenRoute.MyWishlist> { MyWishlistScreen(onNavigateBack = { navController.navigateUp() }) }
-        composable<ScreenRoute.Profile> {
-            ProfileScreen(
-                profileNavigationListener {
-                    navController.navigate(ScreenRoute.Wishlist(it)) {
-                        popUpTo(ScreenRoute.Profile) {
-                            saveState = true
-                        }
-                        restoreState = true
+        profileScreen<ScreenRoute.Profile>(
+            openWishlist = { id: Long ->
+                navController.navigate(ScreenRoute.Wishlist(id)) {
+                    popUpTo(ScreenRoute.Profile) {
+                        saveState = true
                     }
+                    restoreState = true
                 }
-            )
-        }
+            }
+        )
+//        composable<ScreenRoute.Profile> {
+//            ProfileScreen(
+//                profileNavigationListener {
+//                    navController.navigate(ScreenRoute.Wishlist(it)) {
+//                        popUpTo(ScreenRoute.Profile) {
+//                            saveState = true
+//                        }
+//                        restoreState = true
+//                    }
+//                }
+//            )
+//        }
         composable<ScreenRoute.Wishlist> { backStackEntry ->
             WishlistScreen(wishlistNavigationListener { navController.navigateUp() })
         }
