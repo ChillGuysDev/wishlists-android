@@ -4,6 +4,7 @@ import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import androidx.navigation.toRoute
+import com.nikol.wishlist.core.domain.wishlist.WishlistItemDomain
 import com.nikol.wishlist.core.domain.wishlist.WishlistsInteractor
 import com.nikol.wishlist.core.ui.models.toUi
 import com.nikol.wishlist.navigation.ScreenRoute
@@ -16,7 +17,7 @@ import javax.inject.Inject
 internal class WishlistViewModel @Inject constructor(
     savedStateHandle: SavedStateHandle,
     private val wishlistInteractor: WishlistsInteractor,
-) : ViewModel() {
+) : ViewModel(), WishlistListListener {
 
     private val wishlistId: Long = savedStateHandle.toRoute<ScreenRoute.Wishlist>().id
 
@@ -24,6 +25,20 @@ internal class WishlistViewModel @Inject constructor(
 
     init {
         viewModelScope.launch {
+            loadWishlist()
+        }
+    }
+
+    override fun onRemoveClick(id: Long) {
+        viewModelScope.launch {
+            wishlistInteractor.deleteWishlistItem(wishlistId, id)
+            loadWishlist()
+        }
+    }
+
+    override fun onAddItemToWishlist(title: String, description: String) {
+        viewModelScope.launch {
+            wishlistInteractor.addItemToWishlist(wishlistId, WishlistItemDomain(0, title, description, null, null, null))
             loadWishlist()
         }
     }
